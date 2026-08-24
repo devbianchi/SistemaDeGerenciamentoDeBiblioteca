@@ -30,4 +30,6 @@ public class EmprestimoRepository {
   public boolean existePorId(int id) {
     return emprestimos.containsKey(id);
   }
+
+  public int gerarProximoId() { return emprestimos.size() + 1;}
 }
