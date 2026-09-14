@@ -1,4 +1,5 @@
 import exception.BibliotecaException;
+import model.Emprestimo;
 import model.Livro;
 import model.Usuario;
 import repository.EmprestimoRepository;
@@ -7,51 +8,81 @@ import repository.UsuarioRepository;
 import service.EmprestimoService;
 
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    static void main(String[] args) {
-        LivroRepository livroRepository = new LivroRepository();
-        UsuarioRepository usuarioRepository = new UsuarioRepository();
-        EmprestimoRepository emprestimoRepository = new EmprestimoRepository();
-        EmprestimoService emprestimoService = new EmprestimoService(livroRepository, usuarioRepository, emprestimoRepository);
-        Scanner sc = new Scanner(System.in);
+    private static LivroRepository livroRepository;
+    private static UsuarioRepository usuarioRepository;
+    private static EmprestimoRepository emprestimoRepository;
+    private static EmprestimoService emprestimoService;
+    private static Scanner sc;
 
-        mainLoop:
+    public static void main(String[] args) {
+        livroRepository = new LivroRepository();
+        usuarioRepository = new UsuarioRepository();
+        emprestimoRepository = new EmprestimoRepository();
+        emprestimoService = new EmprestimoService(livroRepository, usuarioRepository, emprestimoRepository);
+        sc = new Scanner(System.in);
+
         while (true) {
             exibirMenu();
-            int op = sc.nextInt();
+            int op = lerInteiro("", sc);
 
             switch (op) {
                 case 1:
-                    cadastrarLivro(sc, livroRepository);
+                    cadastrarLivro();
                     break;
                 case 2:
-                    cadastrarUsuario(sc, usuarioRepository);
+                    cadastrarUsuario();
                     break;
                 case 3:
-                    emprestarLivro(sc, emprestimoService);
+                    emprestarLivro();
                     break;
-
+                case 4:
+                    devolverLivro();
+                    break;
+                case 5:
+                    listarLivros();
+                    break;
+                case 6:
+                    listarUsuarios();
+                    break;
+                case 7:
+                    listarEmprestimos();
+                    break;
+                case 8:
+                    System.out.println("\nEncerrando sistema...");
+                    sc.close();
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Opção inválida! Tente novamente.\n");
             }
         }
-
-
-
     }
 
-    private int lerInteiro(String message, Scanner sc) {
-        try {
-            System.out.println(message);
-            return sc.nextInt();
-        } catch (InputMismatchException e) {
-            System.out.println("Erro: Digite um número válido");
-            sc.nextLine();
+    private static int lerInteiro(String mensagem, Scanner sc) {
+        while (true) {
+            try {
+                if (!mensagem.isEmpty()) {
+                    System.out.print(mensagem);
+                }
+                return sc.nextInt();
+            } catch (InputMismatchException e) {
+                System.out.println("Erro: Digite um número válido");
+                sc.nextLine();
+            }
         }
+    }
+
+    private static String lerString(String mensagem, Scanner sc) {
+        System.out.print(mensagem);
+        return sc.next();
     }
 
     public static void exibirMenu() {
-        System.out.println("=== BIBLIOTECA SISTEMA ===");
+        System.out.println("\n=== BIBLIOTECA SISTEMA ===");
         System.out.println("1. Cadastrar Livro");
         System.out.println("2. Cadastrar Usuário");
         System.out.println("3. Emprestar Livro");
@@ -63,61 +94,110 @@ public class Main {
         System.out.print("\nEscolha uma opção: ");
     }
 
-    public static void cadastrarLivro(Scanner sc, LivroRepository livroRepository) {
-        System.out.print("\nId: ");
-        int id = sc.nextInt();
-        System.out.print("\nNome: ");
-        String nome = sc.next();
-        System.out.print("\nAutor: ");
-        String autor = sc.next();
-        System.out.print("\nAno: ");
-        int ano = sc.nextInt();
-
-        Livro livro = new Livro(id, nome, autor, ano, true);
-        livroRepository.adicionar(livro);
-        System.out.println("Livro adicionado com êxito!");
-    }
-
-    public static void cadastrarUsuario(Scanner sc, UsuarioRepository usuarioRepository) {
-        int id = 0;
-        String nome = null;
-        String senha = null;
-        String email = null;
+    public static void cadastrarLivro() {
         try {
-            System.out.print("\nId: ");
-            id = sc.nextInt();
-            System.out.print("\nNome: ");
-            nome = sc.next();
-            System.out.print("\nSenha: ");
-            senha = sc.next();
-            System.out.print("\nEmail: ");
-            email = sc.next();
-        } catch (InputMismatchException e) {
-            throw new RuntimeException("Insira um valor válido");
-        }
+            int id = lerInteiro("\nId: ", sc);
+            String nome = lerString("Nome: ", sc);
+            String autor = lerString("Autor: ", sc);
+            int ano = lerInteiro("Ano: ", sc);
 
-        Usuario usuario = new Usuario(id, nome, senha, email);
-        usuarioRepository.adicionar(usuario);
-        System.out.println("Usuário adicionado com êxito!");
-    }
-
-    public static void emprestarLivro(Scanner sc, EmprestimoService emprestimoService) {
-        int idUsuario = 0;
-        int idLivro = 0;
-        int tempoEmDias = 0;
-        try {
-            System.out.print("\nId do Usuário: ");
-            idUsuario = sc.nextInt();
-            System.out.print("\nId do Livro: ");
-            idLivro = sc.nextInt();
-            System.out.print("\nTempo de Empréstimo (em dias): ");
-            tempoEmDias = sc.nextInt();
-        } catch (InputMismatchException e) {
-            System.out.println("Erro: Digite um número válido");
+            Livro livro = new Livro(id, nome, autor, ano, true);
+            livroRepository.adicionar(livro);
+            System.out.println("Livro adicionado com êxito!\n");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Erro: " + e.getMessage() + "\n");
             sc.nextLine();
         }
+    }
 
-        emprestimoService.emprestar(idUsuario, idLivro, tempoEmDias);
-        System.out.printf("Empréstimo realizado com sucesso! Prazo: %s", tempoEmDias);
+    public static void cadastrarUsuario() {
+        try {
+            int id = lerInteiro("\nId: ", sc);
+            String nome = lerString("Nome: ", sc);
+            String senha = lerString("Senha: ", sc);
+            String email = lerString("Email: ", sc);
+
+            Usuario usuario = new Usuario(id, nome, senha, email);
+            usuarioRepository.adicionar(usuario);
+            System.out.println("Usuário adicionado com êxito!\n");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Erro: " + e.getMessage() + "\n");
+            sc.nextLine();
+        }
+    }
+
+    public static void emprestarLivro() {
+        try {
+            int idUsuario = lerInteiro("\nId do Usuário: ", sc);
+            int idLivro = lerInteiro("Id do Livro: ", sc);
+            int tempoEmDias = lerInteiro("Tempo de Empréstimo (em dias): ", sc);
+
+            Emprestimo emprestimo = emprestimoService.emprestar(idUsuario, idLivro, tempoEmDias);
+            System.out.printf("Empréstimo realizado com sucesso!\n");
+            System.out.printf("Data prevista de devolução: %s\n\n", emprestimo.getDataPrevistaDevolucao());
+        } catch (BibliotecaException e) {
+            System.out.println("Erro: " + e.getMessage() + "\n");
+            sc.nextLine();
+        }
+    }
+
+    public static void devolverLivro() {
+        try {
+            int idEmprestimo = lerInteiro("\nId do Empréstimo: ", sc);
+
+            Emprestimo emprestimo = emprestimoService.devolver(idEmprestimo);
+            System.out.printf("Livro devolvido com sucesso!\n");
+            System.out.printf("Data da devolução: %s\n\n", emprestimo.getDataDevolucaoReal());
+        } catch (BibliotecaException e) {
+            System.out.println("Erro: " + e.getMessage() + "\n");
+            sc.nextLine();
+        }
+    }
+
+    public static void listarLivros() {
+        List<Livro> livros = livroRepository.listarTodos();
+        if (livros.isEmpty()) {
+            System.out.println("\nNenhum livro cadastrado.\n");
+            return;
+        }
+
+        System.out.println("\n=== LISTA DE LIVROS ===");
+        for (Livro livro : livros) {
+            String status = livro.isDisponibilidade() ? "Disponível" : "Indisponível";
+            System.out.println(livro + " | " + status);
+        }
+        System.out.println();
+    }
+
+    public static void listarUsuarios() {
+        List<Usuario> usuarios = usuarioRepository.listarTodos();
+        if (usuarios.isEmpty()) {
+            System.out.println("\nNenhum usuário cadastrado.\n");
+            return;
+        }
+
+        System.out.println("\n=== LISTA DE USUÁRIOS ===");
+        for (Usuario usuario : usuarios) {
+            System.out.println(usuario);
+        }
+        System.out.println();
+    }
+
+    public static void listarEmprestimos() {
+        List<Emprestimo> emprestimos = emprestimoRepository.listarTodos();
+        if (emprestimos.isEmpty()) {
+            System.out.println("\nNenhum empréstimo registrado.\n");
+            return;
+        }
+
+        System.out.println("\n=== LISTA DE EMPRÉSTIMOS ===");
+        for (Emprestimo emprestimo : emprestimos) {
+            String status = emprestimo.isDevolvido() ? "Devolvido" : "Pendente";
+            System.out.println("ID: " + emprestimo.getIdEmprestimo() +
+                    " | Usuário: " + emprestimo.getIdUsuario() +
+                    " | Livro: " + emprestimo.getIdLivro() +
+                    " | Status: " + status);
+        }
+        System.out.println();
     }
 }
