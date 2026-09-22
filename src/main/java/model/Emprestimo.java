@@ -1,23 +1,35 @@
 package model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 
+@Entity
+@Table (name = "emprestimo")
 public class Emprestimo {
-    private final int idEmprestimo;
-    private int idUsuario;
-    private int idLivro;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long idEmprestimo;
+
+    private Long idUsuario;
+    private Long idLivro;
     private LocalDate dataPedido;
     private int tempoEmprestimoDias;
     private LocalDate dataDevolucaoReal;
 
-    public Emprestimo(int idEmprestimo, int idUsuario, int idLivro, LocalDate dataPedido, int tempoEmprestimoDias, LocalDate dataDevolucaoReal) {
+    public Emprestimo() { }
+
+    public Emprestimo(Long idUsuario, Long idLivro, LocalDate dataPedido, int tempoEmprestimoDias, LocalDate dataDevolucaoReal) {
 
         validarIdUsuario(idUsuario);
         validarIdLivro(idLivro);
         validarDataPedido(dataPedido);
         validarTempoEmprestimoDias(tempoEmprestimoDias);
 
-        this.idEmprestimo = idEmprestimo;
         this.idUsuario = idUsuario;
         this.idLivro = idLivro;
         this.dataPedido = dataPedido;
@@ -25,13 +37,13 @@ public class Emprestimo {
         this.dataDevolucaoReal = dataDevolucaoReal;
     }
 
-    private void validarIdUsuario(int idUsuario) {
+    private void validarIdUsuario(Long idUsuario) {
         if (idUsuario <= 0) {
             throw new IllegalArgumentException("Campo Id deve ser maior que 0!");
         }
     }
 
-    private void validarIdLivro(int idLivro) {
+    private void validarIdLivro(Long idLivro) {
         if (idLivro <= 0) {
             throw new IllegalArgumentException("Campo Id deve ser maior que 0!");
         }
@@ -49,24 +61,24 @@ public class Emprestimo {
         }
     }
 
-    public int getIdEmprestimo() {
+    public Long getIdEmprestimo() {
         return idEmprestimo;
     }
 
-    public int getIdUsuario() {
+    public Long getIdUsuario() {
         return idUsuario;
     }
 
-    public void setIdUsuario(int idUsuario) {
+    public void setIdUsuario(Long idUsuario) {
         validarIdUsuario(idUsuario);
         this.idUsuario = idUsuario;
     }
 
-    public int getIdLivro() {
+    public Long getIdLivro() {
         return idLivro;
     }
 
-    public void setIdLivro(int idLivro) {
+    public void setIdLivro(Long idLivro) {
         validarIdLivro(idLivro);
         this.idLivro = idLivro;
     }

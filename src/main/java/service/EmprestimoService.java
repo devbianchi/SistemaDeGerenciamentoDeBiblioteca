@@ -6,12 +6,16 @@ import exception.LivroNaoEncontradoException;
 import exception.UsuarioNaoEncontradoException;
 import model.Emprestimo;
 import model.Livro;
+import model.Usuario;
+import org.springframework.stereotype.Service;
 import repository.EmprestimoRepository;
 import repository.LivroRepository;
 import repository.UsuarioRepository;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
+@Service
 public class EmprestimoService {
     private final LivroRepository livroRepository;
     private final UsuarioRepository usuarioRepository;
@@ -23,50 +27,50 @@ public class EmprestimoService {
         this.emprestimoRepository = emprestimoRepository;
     }
 
-    public Emprestimo emprestar(int idUsuario, int idLivro, int tempoEmprestimoDias) {
-        // valida ‘user’
-        if (!usuarioRepository.existePorId(idUsuario)) {
-            throw new UsuarioNaoEncontradoException(idUsuario);
-        }
+    public Emprestimo emprestar(Long idUsuario, Long idLivro, int tempoEmprestimoDias) {
+        // busca usuario
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException(idUsuario));
 
-        // valida livro
-        if (!livroRepository.existePorId(idLivro)) {
-            throw new LivroNaoEncontradoException(idLivro);
-        }
+        // busca livro
+        Livro livro = livroRepository.findById(idLivro)
+                .orElseThrow(() -> new LivroNaoEncontradoException(idLivro));
 
-        // valida disponibilidade do livro
-        if (!livroRepository.buscarPorId(idLivro).get().isDisponibilidade()) {
-            throw new LivroIndisponivelException(idLivro);
-        }
+        // verifica disponibilidade do livro
+        boolean livroDisponivel = livro.isDisponibilidade();
 
-        // gera o emprestimo
-        int emprestimoId= emprestimoRepository.gerarProximoId();
-        Emprestimo emprestimo = new Emprestimo(emprestimoId, idUsuario, idLivro, LocalDate.now(), tempoEmprestimoDias, null);
+        Emprestimo emprestimo = new Emprestimo(idUsuario, idLivro, LocalDate.now(), tempoEmprestimoDias, null);
 
         // atualiza disponibilidade do livro
-        livroRepository.buscarPorId(idLivro).get().setDisponibilidade(false);
+        livro.setDisponibilidade(false);
 
         // adiciona o emprestimo no emprestimo repo
-        emprestimoRepository.adicionar(emprestimo);
+        emprestimoRepository.save(emprestimo);
 
         return emprestimo;
     }
 
-    public Emprestimo devolver(int idEmprestimo) {
-        // valida emprestimo
-        if (!emprestimoRepository.existePorId(idEmprestimo)) {
-            throw new EmprestimoNaoEncontradoException(idEmprestimo);
-        }
+    public Emprestimo devolver(Long idEmprestimo) {
+        // busca emprestimo
+        Emprestimo emprestimo = emprestimoRepository.findById(idEmprestimo)
+                .orElseThrow(() -> new EmprestimoNaoEncontradoException(idEmprestimo));
 
-        // busca emprestimo e livro
-        Emprestimo emprestimo = emprestimoRepository.buscarPorId(idEmprestimo).get();
-        Livro livro = livroRepository.buscarPorId(emprestimo.getIdLivro()).get();
+        // guarda id do livro
+        Long idLivro = emprestimo.getIdLivro();
 
-        // atualiza disponibilidade
+        // busca livro
+        Livro livro = livroRepository.findById(idLivro)
+                .orElseThrow(() -> new LivroNaoEncontradoException(idLivro));
+
+        // marca como disponível de novo
         livro.setDisponibilidade(true);
 
-        // registra data da devolucao real
+        // registra data da devolução
         emprestimo.setDataDevolucaoReal(LocalDate.now());
+
+        // persistência no banco
+        livroRepository.save(livro);
+        emprestimoRepository.save(emprestimo);
 
         return emprestimo;
     }

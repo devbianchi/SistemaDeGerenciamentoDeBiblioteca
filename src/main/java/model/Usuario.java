@@ -1,12 +1,23 @@
 package model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table (name = "usuario")
 public class Usuario {
-    private final int id;
+    @Id
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    private final Long id;
+
     private String nome;
     private String senha;
     private String email;
 
-    public Usuario(int id, String nome, String senha, String email) {
+    public Usuario(Long id, String nome, String senha, String email) {
 
         if (id <= 0) {
             throw new IllegalArgumentException("Campo Id deve ser maior que 0!");
@@ -22,7 +33,7 @@ public class Usuario {
         this.email = email;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 

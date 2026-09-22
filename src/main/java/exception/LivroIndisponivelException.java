@@ -1,7 +1,7 @@
 package exception;
 
 public class LivroIndisponivelException extends BibliotecaException {
-  public LivroIndisponivelException(int id) {
+  public LivroIndisponivelException(Long id) {
     super("Livro indisponível com id: " + id);
   }
 }

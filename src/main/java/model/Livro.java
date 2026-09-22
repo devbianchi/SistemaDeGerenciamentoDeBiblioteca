@@ -1,13 +1,24 @@
 package model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table (name = "livro")
 public class Livro {
-    private final int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private final Long id;
+
     private final String nome;
     private final String autor;
     private final int ano;
     private boolean disponibilidade;
 
-    public Livro(int id, String nome, String autor, int ano, boolean disponibilidade) {
+    public Livro(Long id, String nome, String autor, int ano, boolean disponibilidade) {
 
         if (id <= 0) {
             throw new IllegalArgumentException("Campo Id deve ser maior que 0!");
@@ -32,7 +43,7 @@ public class Livro {
         this.disponibilidade = disponibilidade;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
