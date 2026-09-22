@@ -10,6 +10,8 @@ import com.sysbiblioteca.model.Emprestimo;
 import com.sysbiblioteca.repository.EmprestimoRepository;
 import com.sysbiblioteca.repository.LivroRepository;
 import com.sysbiblioteca.repository.UsuarioRepository;
+import com.sysbiblioteca.util.ConsoleUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,9 +19,17 @@ import java.util.List;
 
 @Service
 public class EmprestimoService {
+    @Autowired
     private final LivroRepository livroRepository;
+
+    @Autowired
     private final UsuarioRepository usuarioRepository;
+
+    @Autowired
     private final EmprestimoRepository emprestimoRepository;
+
+    @Autowired
+    private ConsoleUtils input;
 
     public EmprestimoService(LivroRepository livroRepository, UsuarioRepository usuarioRepository, EmprestimoRepository emprestimoRepository) {
         this.livroRepository = livroRepository;
@@ -86,7 +96,8 @@ public class EmprestimoService {
             return;
         }
 
-        System.out.println("\n=== LISTA DE EMPRÉSTIMOS ===");
+        input.limparTerminal();
+        System.out.println("=== LISTA DE EMPRÉSTIMOS ===");
         for (Emprestimo emprestimo : emprestimos) {
             String status = emprestimo.isDevolvido() ? "Devolvido" : "Pendente";
             System.out.println("ID: " + emprestimo.getIdEmprestimo() +
