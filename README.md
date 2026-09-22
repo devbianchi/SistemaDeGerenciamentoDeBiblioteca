@@ -330,11 +330,11 @@ biblioteca/
 Com JPA, `findById()` retorna `Optional`. Força explicitamente a lidar com "não encontrado", evitando `NullPointerException`.
 
 ```java
-// ✅ Seguro
+//  Seguro
 Livro livro = livroRepository.findById(idLivro)
     .orElseThrow(() -> new LivroNaoEncontradoException(idLivro));
 
-// ❌ Arriscado (antigo)
+//  Arriscado (antigo)
 Livro livro = livroRepository.get(idLivro); // pode ser null
 if (livro == null) { ... } // cód desnecessário
 ```
