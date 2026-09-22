@@ -46,6 +46,7 @@ public class EmprestimoService {
 
         // atualiza disponibilidade do livro
         livro.setDisponibilidade(false);
+        livroRepository.save(livro);
 
         // adiciona o emprestimo no emprestimo repo
         emprestimoRepository.save(emprestimo);
