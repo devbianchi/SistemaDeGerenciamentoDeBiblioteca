@@ -39,7 +39,7 @@ public class ConsoleUtils {
 
     public String lerString(String mensagem) {
         System.out.print(mensagem);
-        return scanner.next();
+        return scanner.nextLine();
     }
 
     public void limparScanner() {
@@ -61,5 +61,11 @@ public class ConsoleUtils {
         System.out.println("7. Listar Empréstimos");
         System.out.println("8. Sair");
         System.out.print("\nEscolha uma opção: ");
+    }
+
+    public void limparTerminal() {
+        // \033[H move o cursor para o topo, \033[2J limpa a tela
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
     }
 }
