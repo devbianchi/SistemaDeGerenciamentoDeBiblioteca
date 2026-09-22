@@ -112,7 +112,7 @@ O projeto segue o padrão de **arquitetura em camadas** (layered architecture), 
 -  Usuário deve existir no BD (senão: `UsuarioNaoEncontradoException`)
 -  Livro deve existir no BD (senão: `LivroNaoEncontradoException`)
 -  Livro deve estar disponível (senão: `LivroIndisponivelException`)
--  Tempo de empréstimo deve ser > 0 (validação no model)
+-  Tempo de empréstimo deve ser > 0 (validação no com.sysbiblioteca.model)
 
 **Ao devolver:**
 -  Empréstimo deve existir no BD (senão: `EmprestimoNaoEncontradoException`)
@@ -159,7 +159,7 @@ Implementados 6 testes com **JUnit 5**, cobrindo cenários críticos:
 
 ---
 
-## 🛠️ Como Usar
+## Como Usar
 
 ### Pré-requisitos
 
@@ -251,7 +251,7 @@ mvn test
 
 ### Boas Práticas
 -  Tratamento de exceções customizadas
--  Validação de entrada (model + service)
+-  Validação de entrada (com.sysbiblioteca.model + com.sysbiblioteca.service)
 -  Código limpo e legível
 -  Métodos reutilizáveis
 -  Testes automatizados com padrão AAA
@@ -296,17 +296,17 @@ Este projeto foi desenvolvido como base sólida antes de escalar para **Spring B
 biblioteca/
 ├── src/
 │   ├── main/java/
-│   │   ├── model/
+│   │   ├── com.sysbiblioteca.model/
 │   │   │   ├── Livro.java
 │   │   │   ├── Usuario.java
 │   │   │   └── Emprestimo.java
-│   │   ├── repository/
+│   │   ├── com.sysbiblioteca.repository/
 │   │   │   ├── LivroRepository.java
 │   │   │   ├── UsuarioRepository.java
 │   │   │   └── EmprestimoRepository.java
-│   │   ├── service/
+│   │   ├── com.sysbiblioteca.service/
 │   │   │   └── EmprestimoService.java
-│   │   ├── exception/
+│   │   ├── com.sysbiblioteca.exception/
 │   │   │   ├── BibliotecaException.java
 │   │   │   ├── LivroNaoEncontradoException.java
 │   │   │   ├── UsuarioNaoEncontradoException.java
@@ -316,7 +316,7 @@ biblioteca/
 │   ├── resources/
 │   │   └── application.properties
 │   └── test/java/
-│       └── service/
+│       └── com.sysbiblioteca.service/
 │           └── EmprestimoServiceTest.java
 ├── pom.xml
 └── README.md
