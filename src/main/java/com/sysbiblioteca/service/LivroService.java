@@ -18,7 +18,6 @@ public class LivroService {
 
     public void cadastrarLivro() {
         try {
-            int id = input.lerInteiro("\nId: ");
             String nome = input.lerString("Nome: ");
             String autor = input.lerString("Autor: ");
             int ano = input.lerInteiro("Ano: ");

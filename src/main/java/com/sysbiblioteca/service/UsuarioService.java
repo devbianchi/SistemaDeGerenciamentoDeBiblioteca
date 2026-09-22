@@ -18,7 +18,6 @@ public class UsuarioService {
 
     public void cadastrarUsuario() {
         try {
-            int id = input.lerInteiro("\nId: ");
             String nome = input.lerString("Nome: ");
             String senha = input.lerString("Senha: ");
             String email = input.lerString("Email: ");
