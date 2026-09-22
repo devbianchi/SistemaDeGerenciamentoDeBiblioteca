@@ -20,11 +20,6 @@ public class Usuario {
     public Usuario() { }
 
     public Usuario(String nome, String senha, String email) {
-
-        if (id <= 0) {
-            throw new IllegalArgumentException("Campo Id deve ser maior que 0!");
-        }
-
         validarNome(nome);
         validarSenha(senha);
         validarEmail(email);
