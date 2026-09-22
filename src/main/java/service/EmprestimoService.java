@@ -13,7 +13,6 @@ import repository.LivroRepository;
 import repository.UsuarioRepository;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 @Service
 public class EmprestimoService {
@@ -37,8 +36,11 @@ public class EmprestimoService {
                 .orElseThrow(() -> new LivroNaoEncontradoException(idLivro));
 
         // verifica disponibilidade do livro
-        boolean livroDisponivel = livro.isDisponibilidade();
+        if (!livro.isDisponibilidade()) {
+            throw new LivroIndisponivelException(idLivro);
+        }
 
+        // Realiza empréstimo
         Emprestimo emprestimo = new Emprestimo(idUsuario, idLivro, LocalDate.now(), tempoEmprestimoDias, null);
 
         // atualiza disponibilidade do livro
