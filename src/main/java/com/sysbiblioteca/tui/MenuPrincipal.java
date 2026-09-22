@@ -24,6 +24,7 @@ public class MenuPrincipal {
     private ConsoleUtils input;
 
     public void iniciarMenu() {
+        input.limparTerminal();
         while (true) {
             input.exibirMenu();
             int op = input.lerInteiro("");
