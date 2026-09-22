@@ -17,13 +17,16 @@ public class UsuarioService {
     private ConsoleUtils input;
 
     public void cadastrarUsuario() {
+        input.limparTerminal();
         try {
+            input.limparScanner();
             String nome = input.lerString("Nome: ");
             String senha = input.lerString("Senha: ");
             String email = input.lerString("Email: ");
 
             Usuario usuario = new Usuario(nome, senha, email);
             usuarioRepository.save(usuario);
+            input.limparTerminal();
             System.out.println("Usuário adicionado com êxito!\n");
         } catch (IllegalArgumentException e) {
             System.out.println("Erro: " + e.getMessage() + "\n");
@@ -38,7 +41,9 @@ public class UsuarioService {
             return;
         }
 
-        System.out.println("\n=== LISTA DE USUÁRIOS ===");
+
+        input.limparTerminal();
+        System.out.println("=== LISTA DE USUÁRIOS ===");
         for (Usuario usuario : usuarios) {
             System.out.println(usuario);
         }

@@ -17,13 +17,16 @@ public class LivroService {
     private ConsoleUtils input;
 
     public void cadastrarLivro() {
+        input.limparTerminal();
         try {
+            input.limparScanner();
             String nome = input.lerString("Nome: ");
             String autor = input.lerString("Autor: ");
             int ano = input.lerInteiro("Ano: ");
 
             Livro livro = new Livro(nome, autor, ano, true);
             livroRepository.save(livro);
+            input.limparTerminal();
             System.out.println("Livro adicionado com êxito!\n");
         } catch (IllegalArgumentException e) {
             System.out.println("Erro: " + e.getMessage() + "\n");
@@ -38,7 +41,9 @@ public class LivroService {
             return;
         }
 
-        System.out.println("\n=== LISTA DE LIVROS ===");
+
+        input.limparTerminal();
+        System.out.println("=== LISTA DE LIVROS ===");
         for (Livro livro : livros) {
             String status = livro.isDisponibilidade() ? "Disponível" : "Indisponível";
             System.out.println(livro + " | " + status);
