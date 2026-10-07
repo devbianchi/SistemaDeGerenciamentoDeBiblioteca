@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: "${PASSWORD}"
       POSTGRES_DB: biblioteca
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql
 
@@ -22,8 +22,8 @@ services:
     tty: true
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/biblioteca
-      - SPRING_DATASOURCE_USERNAME="${USER}"
-      - SPRING_DATASOURCE_PASSWORD="${PASSWORD}"
+      - SPRING_DATASOURCE_USERNAME=${USER}
+      - SPRING_DATASOURCE_PASSWORD=${PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     depends_on:
       - database
