@@ -1,16 +1,16 @@
 # Biblioteca - Sistema de Gerenciamento de Empréstimos
 
-Um sistema de gerenciamento de biblioteca construído com **Spring Boot** e **Spring Data JPA**, demonstrando princípios sólidos de Programação Orientada a Objetos, arquitetura em camadas, persistência em banco de dados relacional e boas práticas de desenvolvimento.
+Um sistema de gerenciamento de biblioteca construído com **Spring Boot** e **Spring Data JPA**, demonstrando princípios sólidos de Programação Orientada a Objetos, arquitetura em camadas, persistência em banco de dados relacional, **containerização com Docker** e boas práticas de desenvolvimento.
 
 ## Objetivo
 
-Este projeto foi desenvolvido como portfólio para candidaturas a vagas de **Desenvolvedor Backend Júnior em Java**. Implementa um sistema funcional de empréstimo e devolução de livros, com foco em **código limpo, testes automatizados, persistência real em banco de dados e decisões arquiteturais conscientes**.
+Este projeto foi desenvolvido como portfólio para candidaturas a vagas de **Desenvolvedor Backend Júnior em Java**. Implementa um sistema funcional de empréstimo e devolução de livros, com foco em **código limpo, testes automatizados, persistência real em banco de dados, ambiente reproduzível com Docker e decisões arquiteturais conscientes**.
 
 ---
 
 ## Arquitetura
 
-O projeto segue o padrão de **arquitetura em camadas** (layered architecture), agora gerenciada pelo container de injeção de dependência do Spring:
+O projeto segue o padrão de **arquitetura em camadas** (layered architecture), gerenciada pelo container de injeção de dependência do Spring e executada em containers Docker:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -32,8 +32,20 @@ O projeto segue o padrão de **arquitetura em camadas** (layered architecture), 
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│        PostgreSQL Database              │  ← Persistência real
+│        PostgreSQL Database              │  ← Persistência real (container)
 └─────────────────────────────────────────┘
+```
+
+### Infraestrutura (Docker Compose)
+
+```
+┌────────────────────────────┐        ┌────────────────────────────┐
+│  backend (java_backend)    │  JDBC  │  database (postgres_db)    │
+│  Maven + Temurin 21        │ ─────► │  PostgreSQL 18             │
+│  porta 8080                │        │  porta 5433 (host) → 5432  │
+└────────────────────────────┘        └──────────────┬─────────────┘
+                                                     │
+                                          volume nomeado: pgdata
 ```
 
 ### Pacotes
@@ -88,6 +100,15 @@ O projeto segue o padrão de **arquitetura em camadas** (layered architecture), 
 ### 8. **`ConsoleUtils` — Leitura de Input Isolada**
 - Métodos de leitura de input (número inteiro com validação, texto) foram extraídos da classe `Main` para uma classe utilitária dedicada
 - Centraliza o tratamento de `InputMismatchException` (usuário digitando letra em campo numérico) em um único lugar, evitando duplicação de `try/catch` em cada opção do menu
+
+### 9. **Docker e Docker Compose**
+- **Ambiente reproduzível:** qualquer pessoa sobe a aplicação + banco com um único comando, sem instalar Java, Maven ou PostgreSQL localmente
+- **Configuração externalizada:** a aplicação não tem credenciais fixas no container — o Compose injeta `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`, que o Spring Boot reconhece automaticamente e que sobrescrevem o `application.properties` (*relaxed binding*)
+- **Credenciais fora do código:** usuário e senha vêm de um arquivo `.env` (não versionado), com um `.env.example` como modelo
+- **Comunicação entre containers pelo nome do serviço:** o backend acessa o banco em `jdbc:postgresql://database:5432/biblioteca` (rede interna do Compose), enquanto a porta `5433` do host é exposta apenas para acesso externo (ex.: DBeaver/psql), evitando conflito com um PostgreSQL local na `5432`
+- **Persistência com volume nomeado (`pgdata`):** os dados sobrevivem a `docker compose down` e recriação dos containers
+- **`stdin_open` + `tty`:** necessários porque a interface atual é um **menu de console** — sem eles o `Scanner` não consegue ler a entrada do usuário dentro do container
+- **Imagem de desenvolvimento:** o `Dockerfile` usa `maven:3.9-eclipse-temurin-21-alpine` e executa `mvn spring-boot:run` diretamente, priorizando simplicidade no desenvolvimento (veja *Próximos passos* para a versão de produção)
 
 ---
 
@@ -160,20 +181,84 @@ Implementados 6 testes com **JUnit 5**, cobrindo cenários críticos da camada d
 
 ## Como Usar
 
-### Pré-requisitos
+Há duas formas de rodar o projeto: **com Docker (recomendado)** ou **localmente**.
+
+### Opção 1 — Docker (recomendado)
+
+#### Pré-requisitos
+
+- **Docker** e **Docker Compose**
+
+#### 1. Configurar variáveis de ambiente
+
+Copie o arquivo de exemplo e preencha com suas credenciais do banco:
+
+```bash
+cp .env.example .env
+```
+
+```env
+USER=seu_user_name_aqui
+PASSWORD=sua_senha_aqui
+```
+
+> ⚠️ O arquivo `.env` contém credenciais — **não o versione** (adicione ao `.gitignore`). Apenas o `.env.example` vai para o repositório.
+
+#### 2. Subir os containers
+
+```bash
+docker compose up --build -d
+```
+
+Isso cria dois containers:
+
+| Serviço    | Container     | Descrição                                   | Porta (host)       |
+|------------|---------------|---------------------------------------------|--------------------|
+| `database` | `postgres_db` | PostgreSQL 18, banco `biblioteca`           | `5433` → `5432`    |
+| `backend`  | `java_backend`| Aplicação Spring Boot (Maven + Java 21)     | `8080`             |
+
+> Na primeira execução o Maven baixa as dependências, então o backend pode levar alguns minutos para iniciar. Acompanhe com `docker compose logs -f backend`.
+
+#### 3. Usar o menu de console
+
+Como a interface é um menu interativo, conecte-se ao terminal do container do backend:
+
+```bash
+docker attach java_backend
+```
+
+Para sair do `attach` **sem derrubar o container**, use `Ctrl+P` seguido de `Ctrl+Q`.
+
+#### 4. Comandos úteis
+
+```bash
+docker compose logs -f backend   # acompanhar logs da aplicação
+docker compose down              # para e remove os containers (dados preservados no volume)
+docker compose down -v           # para tudo e APAGA o volume pgdata (zera o banco)
+```
+
+#### 5. Acessar o banco pelo host (opcional)
+
+```bash
+psql -h localhost -p 5433 -U <seu_user> -d biblioteca
+```
+
+### Opção 2 — Execução local (sem Docker)
+
+#### Pré-requisitos
 
 - **Java 21** (ou superior)
 - **PostgreSQL** instalado e rodando
 - **Maven**
 
-### 1. Configurar Banco de Dados
+#### 1. Configurar Banco de Dados
 
 ```bash
 psql -U postgres
 CREATE DATABASE biblioteca;
 ```
 
-### 2. Configurar `application.properties`
+#### 2. Configurar `application.properties`
 
 Em `src/main/resources/application.properties`:
 
@@ -187,14 +272,14 @@ spring.jpa.show-sql=false
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 ```
 
-### 3. Compilar e Rodar
+#### 3. Compilar e Rodar
 
 ```bash
 mvn clean install
 mvn spring-boot:run
 ```
 
-### 4. Rodar Testes
+### Rodar Testes
 
 ```bash
 mvn test
@@ -208,7 +293,8 @@ mvn test
 - **Spring Boot** — Framework principal, injeção de dependência
 - **Spring Data JPA** — ORM (Object-Relational Mapping)
 - **Hibernate** — Provider JPA (gerencia entidades e persistência)
-- **PostgreSQL** — Banco de dados relacional
+- **PostgreSQL 18** — Banco de dados relacional
+- **Docker / Docker Compose** — Containerização e orquestração do ambiente
 - **JUnit 5** — Framework de testes
 - **Maven** — Build tool
 - **LocalDate** — API moderna de datas (java.time)
@@ -230,6 +316,13 @@ mvn test
 -  Geração automática de ID (`@GeneratedValue`)
 -  `Optional<T>` + `orElseThrow()` para acesso seguro a dados
 
+### Docker e Infraestrutura
+-  `Dockerfile` para empacotar a aplicação Java
+-  `docker-compose` orquestrando aplicação + banco
+-  Configuração via variáveis de ambiente (sem credenciais no código)
+-  Volume nomeado para persistência de dados
+-  Rede interna entre containers (resolução por nome de serviço)
+
 ### Boas Práticas
 -  Tratamento de exceções customizadas
 -  Validação de entrada (model + service)
@@ -245,16 +338,23 @@ mvn test
 - HashMap em memória, sem persistência real
 - Foco em modelagem OOP, arquitetura em camadas e testes, sem depender de framework
 
-### v2 — Atual (Spring Boot + JPA + PostgreSQL)
+### v2 — Spring Boot + JPA + PostgreSQL
 - Migração para Spring Data JPA, com persistência real em PostgreSQL
 - ID gerado automaticamente pelo banco
 - Injeção de dependência via Spring
 - Leitura de console isolada em `ConsoleUtils`
 
-### v3 — Próximos passos
+### v3 — Atual (Docker)
+- `Dockerfile` para a aplicação e `docker-compose.yml` com PostgreSQL + backend
+- Configuração do datasource via variáveis de ambiente (`.env`)
+- Volume nomeado para persistência dos dados do banco
+
+### v4 — Próximos passos
 - Exposição via API REST (`@RestController`)
 - Validação automática com Bean Validation (`@Valid`, `@NotNull`)
 - Autenticação com Spring Security
+- `Dockerfile` multi-stage (build com Maven → imagem final enxuta com apenas JRE e o `.jar`)
+- `healthcheck` no banco + `depends_on: condition: service_healthy`
 
 ---
 
@@ -288,6 +388,9 @@ biblioteca/
 │   └── test/java/
 │       └── service/
 │           └── EmprestimoServiceTest.java
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
 ├── pom.xml
 └── README.md
 ```
@@ -316,15 +419,32 @@ Antes, cada método do menu (`cadastrarLivro`, `emprestarLivro`, etc.) repetia o
 ### Por que ID gerado automaticamente agora?
 Na v1 (HashMap), o ID era gerado manualmente (`emprestimos.size() + 1`), o que funciona em memória mas não é seguro em banco de dados real (risco de concorrência, exclusões gerando IDs repetidos). Com `@GeneratedValue`, o próprio PostgreSQL garante unicidade.
 
+### Por que adicionar Docker?
+Rodar o projeto exigia instalar Java, Maven e PostgreSQL e configurar o `application.properties` na mão — o clássico "na minha máquina funciona". Com Docker Compose, o ambiente inteiro (aplicação + banco) sobe com um comando e as credenciais ficam fora do código. O `Dockerfile` atual é propositalmente simples (roda `mvn spring-boot:run`), pensado para desenvolvimento; uma imagem de produção usaria build multi-stage.
+
+### Por que `SPRING_DATASOURCE_*` em vez de editar o `application.properties`?
+O Spring Boot converte variáveis de ambiente como `SPRING_DATASOURCE_URL` nas propriedades equivalentes (`spring.datasource.url`) e dá a elas prioridade sobre o arquivo. Assim o mesmo código roda localmente (apontando para `localhost`) e no Docker (apontando para o serviço `database`) sem nenhuma alteração.
+
 ---
 
 ## Troubleshooting
 
 **Erro: `SQLException: FATAL: database "biblioteca" does not exist`**
-→ Crie a database: `CREATE DATABASE biblioteca;`
+→ Local: crie a database com `CREATE DATABASE biblioteca;`
+→ Docker: o banco é criado automaticamente na primeira subida (`POSTGRES_DB`). Se o volume já existia com outra configuração, recrie com `docker compose down -v`.
 
 **Erro: `org.hibernate.exception.JDBCConnectionException`**
-→ Verifique se o PostgreSQL está rodando e se `application.properties` está correto
+→ Local: verifique se o PostgreSQL está rodando e se `application.properties` está correto
+→ Docker: o backend pode ter iniciado antes de o banco estar pronto. Como o serviço usa `restart: always`, ele tenta novamente sozinho; confira com `docker compose logs backend`
+
+**Erro: `FATAL: password authentication failed for user`**
+→ O PostgreSQL só aplica `POSTGRES_USER`/`POSTGRES_PASSWORD` na **primeira** criação do volume. Se você alterou o `.env` depois, rode `docker compose down -v` para recriar o banco com as novas credenciais (isso apaga os dados)
+
+**Erro: `port is already allocated` (5433 ou 8080)**
+→ Outra aplicação está usando a porta. Pare o processo ou altere a porta do lado esquerdo em `ports:` no `docker-compose.yml`
+
+**O menu não responde / não aceita digitação no Docker**
+→ Use `docker attach java_backend` (o `docker compose up -d` roda em segundo plano). Para sair sem derrubar o container: `Ctrl+P` e `Ctrl+Q`
 
 ---
 
@@ -335,4 +455,4 @@ Guilherme Machado
 
 ---
 
-**Última atualização:** Setembro 2026
+**Última atualização:** Outubro 2026
